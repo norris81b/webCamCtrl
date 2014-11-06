@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<CameraControl>
+    <Id>0</Id>
+    <Preset>
+        <Id>1</Id>
+        <DisplayText>Screen</DisplayText>
+    </Preset>
+    <Preset>
+        <Id>2</Id>
+        <DisplayText>Lecturn</DisplayText>
+    </Preset>
+    <Preset>
+        <Id>3</Id>
+        <DisplayText>Choir</DisplayText>
+    </Preset>
+    <Preset>
+        <Id>4</Id>
+        <DisplayText>Alter</DisplayText>
+    </Preset>
+    <Preset>
+        <Id>5</Id>
+        <DisplayText>Aisle</DisplayText>
+    </Preset>
+    <Preset>
+        <Id>6</Id>
+        <DisplayText>KeyBd</DisplayText>
+    </Preset>
+    <Preset>
+        <Id>7</Id>
+        <DisplayText>Youth</DisplayText>
+    </Preset>
+    <Preset>
+        <Id>8</Id>
+        <DisplayText>Closet</DisplayText>
+    </Preset>
+    <Preset>
+        <Id>9</Id>
+        <DisplayText>fff</DisplayText>
+    </Preset>
+</CameraControl>

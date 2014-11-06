@@ -1,0 +1,88 @@
+<project name="WebCamCtrl" default="compile" basedir=".">
+	<description>Web Camera Control Build</description>
+    <property environment="env"/>
+    <property name="ant.project.name" value="WebCamCtrl"/>
+    <property name="filename" value="${ant.project.name}"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="src.dir" value="src"/>
+    <property name="classes.dir" value="dist/classes"/>
+    <property name="jar.dir" value="."/>
+    <property name="java.lib.dir" value="${java.home}/lib"/>
+    <property name="rs232.cam.dir" value="../rs232Camera"/>
+    <property name="jboss.servlet.mod" value="${env.JBOSS_HOME}/modules/javax/servlet/api/main/"/>
+    <echo message="Java lib dir = ${java.lib.dir}"/>
+
+    <path id="classpath">
+            <fileset dir="${jboss.servlet.mod}" includes="**/*.jar"/>
+            <fileset dir="${lib.dir}" includes="**/*.jar"/>
+            <fileset dir="${java.lib.dir}" includes="**/*.jar"/>
+    </path>
+
+    <target name="rs232Camera">
+    	<ant antfile="${rs232.cam.dir}/build.xml" inheritall="true" dir="${rs232.cam.dir}" target="jar">
+        </ant>
+        <copyfile src="${rs232.cam.dir}/dist/RS232Camera.jar" dest="${lib.dir}/RS232Camera.jar"/>
+    </target>
+
+    <target name="clean">
+            <delete dir="${classes.dir}" failonerror="no"/>
+	    <delete file="${jar.dir}/${filename}.war" failonerror="no"/>
+    </target>
+	
+    <target name="compile" >
+            <mkdir dir="${classes.dir}"/>
+            <property name="myclasspath" refid="classpath"/>
+            <!-- Print the property to the ant console -->
+            <echo message="Classpath = ${myclasspath}"/>
+            <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" debug="true" debuglevel="lines,vars,source" includeantruntime="true"/>
+    </target>
+
+	
+	
+    <target name="jar" depends="compile">
+    		<pathconvert property="manifest.classpath" pathsep=" ">
+    		  <path refid="classpath"/>
+    		  <mapper>
+    		    <chainedmapper>
+    		       <flattenmapper/>
+    		       <globmapper from="*.jar" to="lib/*.jar"/>
+    		    </chainedmapper>
+    		  </mapper>
+    		</pathconvert>
+    	
+            <mkdir dir="${jar.dir}"/>
+    	
+            <jar destfile="${jar.dir}/${filename}.jar">
+                <manifest>
+                	<attribute name="Main-Class" value="com.onetouchis.cameracntrl.RS232Main"/>
+                	<attribute name="Class-Path" value="./ ${manifest.classpath}"/>             	
+                </manifest>
+            	<fileset dir="${classes.dir}" /> 
+                <zipgroupfileset dir="${lib.dir}" includes="*.jar"/>
+            </jar>
+    </target>
+
+    <target name="war" depends="compile">
+      <war destfile="webCamCtrl.war" webxml="web.xml">
+        <zipfileset dir="fonts" prefix="fonts"/>
+        <zipfileset dir="css" prefix="css"/>
+        <zipfileset dir="js" prefix="js"/>
+        <zipfileset dir="resources" prefix="/resources"/>
+        <fileset dir="html"/>
+        <lib dir="${lib.dir}"/>
+        <classes dir="${classes.dir}"/>
+      </war>
+    </target>
+
+
+
+    <target name="run" depends="jar">
+            <property name="myclasspath" refid="classpath"/>
+            <!-- Emit the property to the ant console -->
+            <echo message="Classpath = ${myclasspath}"/>
+    		<echo message="Running = ${jar.dir}/${filename}.war"/>
+            <java jar="${jar.dir}/${filename}.war" fork="true">
+            </java>
+    </target>
+
+</project>
