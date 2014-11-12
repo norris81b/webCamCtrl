@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,15 @@ public class RS232NetProcessor extends Thread implements IProcessor,
     private Map<String, RS232CmdData> nameToCmdMap = new HashMap<String, RS232CmdData>();
 
     /**
+     * Host address of the remote socket connected to an RS232 port
+     */
+    private String remoteIpAddress;
+    
+    /**
+     * Port id of the remote socket connected to an RS232 port
+     */
+    private int remotePortNumber;
+    /**
      * selected socket that is associated with a serial port for
      * sending/receiving data
      */
@@ -76,20 +86,38 @@ public class RS232NetProcessor extends Thread implements IProcessor,
     /**
      * Creates the network socket to send commands, loads up the commands, 
      * starts the queue for sending commands, then sends an identifier cmd.
-     * @param ipAddress host that will receive the cmds
-     * @param portNumber network port on the host that will receive cmds
+     * @param remoteIpAddress host that will receive the cmds
+     * @param remotePortNumber network port on the host that will receive cmds
      * @param commPort not used.
      */
     @Override
-    public void initialize(String ipAddress, int portNumber, String commPort)
+    public void initialize(String remoteIpAddress, int remotePortNumber, String commPort)
             throws Exception {
-        logger.info("Attemping to connect to host " + ipAddress + " on port "
-                + portNumber);
 
-        serialSocket = new Socket(ipAddress, portNumber);
-        outputStream = serialSocket.getOutputStream();
-
+        // save the remote host and port in case we need to reconnect the socket
+        this.remoteIpAddress = remoteIpAddress;
+        this.remotePortNumber = remotePortNumber;
+        
         loadCommands();
+        
+        setupSocket();
+
+    }
+  
+    /**
+     * Resets the socket connection by closing it if it's open, then connecting
+     * @throws Exception
+     */
+    private void setupSocket() throws Exception
+    {
+        logger.info("Attempting to connect to host " + remoteIpAddress + " on port "
+                + remotePortNumber);
+        if (serialSocket != null)
+        {
+            serialSocket.close();
+        }
+        serialSocket = new Socket(remoteIpAddress, remotePortNumber);
+        outputStream = serialSocket.getOutputStream();
 
         running = true;
         queue = new RS232BlockingQ(serialSocket, this);
@@ -197,9 +225,14 @@ public class RS232NetProcessor extends Thread implements IProcessor,
 
     public void run() {
 
+        boolean connectionFailed = false;
         while (running) {
             try {
                 RS232CmdData cmdData = null;
+                if (queue == null) {
+                    logger.warning("Waiting for queue to reset");
+                    Thread.sleep(1000);
+                }
                 cmdData = queue.take();
                 if (cmdData != null) {
                     byte code = cmdData.getCode();
@@ -224,6 +257,19 @@ public class RS232NetProcessor extends Thread implements IProcessor,
             } catch (Exception e) {
                 logger.log(Level.WARNING, "Exception sending cmd: ", e);
                 logger.log(Level.WARNING, "Caused by: " + e.getCause());
+                connectionFailed = true;
+            }
+            
+            if (connectionFailed) {
+                logger.warning("Retrying socket: " + remoteIpAddress + ":" + remotePortNumber);
+                try {
+                    close();
+                    setupSocket();
+                    connectionFailed = false;
+                } catch (Exception e1) {
+                    logger.log(Level.WARNING, "Unable to reconnect socket", e1);
+                }
+
             }
         }
     }

@@ -15,18 +15,32 @@
     body { margin: 0; }
     #shade, #modal { display: none; }
     #shade { position: fixed; z-index: 100; top: 0; left: 0; width: 100%; height: 100%; }
-    #modal { position: fixed; z-index: 101; top: 33%; left: 25%; width: 50%; }
+    #modal { position: fixed; z-index: 101; top: 45%; left: 33%; width: 50%; }
     #shade { background: silver; opacity: 0.5; filter: alpha(opacity=50); }
 </style>
 
 <script src="js/jquery-1.11.0.js"></script>
 <script>
+    <!-- indicates the next preset push should be treated as a "set the preset" command -->
     var setPreset;
+    
+    <!-- indicates which preset to set -->
     var presetToSet;
+    
+    <!-- indicates whether or not scanning is active -->
     var isScanning;
-    var lastElem;
+    
+    <!-- an array of the preset number and text values -->
+    var presetData;
+    
+    <!-- text from the last element clicked on -->
     var lastElemText = "";
     
+    <!-- the last element clicked on -->
+    var lastElem;
+    
+    
+    <!-- sends the updated preset information and hides the popup -->
     function sendPresetAndClear(elem) 
     {
                 var presetText = document.getElementById("presetName");
@@ -36,17 +50,14 @@
                 setPreset = false;
     }
     
-	function myFunction() 
-	{
-		document.getElementById("demo").innerHTML = "Hello World";
-	}
-	
+    <!-- builds a single preset -->
 	function buildPreset(presetNumber, presetText)
 	{
        document.getElementById("preset" + presetNumber).innerHTML = 
            "<div class=\"col-xs-2\"><button onclick=\"sendCmd(" + presetNumber + ")\" type=\"button\" class=\"btn btn-primary\">" + presetText + "</button></div>";
 	}
 	
+	<!-- builds all of the presets -->
 	function presets()
 	{
 		for (var i=0;i<10;i++)
@@ -54,7 +65,8 @@
 			buildPreset(i, "Preset " + i);
 		}
 	}
-	
+
+    <!-- starts and stops scanning from preset to preset -->	
 	function sendScanning(elem)
 	{
 	  if ("Stop Scanning" == elem.value)
@@ -98,11 +110,13 @@
 	
 	function sendCmd(cmd)
 	{
-//		document.getElementById("result").innerHTML = "Preset value is set to " + cmd;
 		var cmdObject = new Object();
 		cmdObject.command = cmd;
-		if (setPreset && (cmd >= '0' && cmd <=9))
+		if (setPreset && (cmd >= 0 && cmd <=9))
 		{
+	   		var presetText = document.getElementById("presetName");
+            presetText.value = presetData[cmd].text
+	   		
 			presetToSet = cmd;
 		    modal.style.display=shade.style.display= 'block';
 		}
@@ -113,67 +127,19 @@
 				setPreset = true;
 			}
 			var jsonData = JSON.stringify(cmdObject);
+	   		$('#result').html(jsonData);
 			$.getJSON("ptzcamera", {action:"export",json:jsonData}, function(data) {
 			  if (data.PRESET_DATA) {
-	   			var obj = $.parseJSON(data.PRESET_DATA);
-	   			$('#result').html(obj[1].number);
+	   			presetData = $.parseJSON(data.PRESET_DATA);
 		   		for (var i=0;i<10;i++)
 				{ 
-					buildPreset(obj[i].number, obj[i].text);
+					buildPreset(presetData[i].number, presetData[i].text);
 				}
 	   		  }
 			});
 		}
 	}
 	
-	function sendSocket(cmd)
-	{
-	  if ("WebSocket" in window)
-	  {
-	     alert("WebSocket is supported by your Browser!");
-	     // Let us open a web socket
-	     var ws = new WebSocket("ws://localhost:9998/echo");
-	     ws.onopen = function()
-	     {
-	        // Web Socket is connected, send data using send()
-	        ws.send(cmd);
-	        alert("Message is sent...");
-	     };
-	     ws.onmessage = function (evt) 
-	     { 
-	        var received_msg = evt.data;
-	        alert("Message is received...");
-	     };
-	     ws.onclose = function()
-	     { 
-	        // websocket is closed.
-	        alert("Connection is closed..."); 
-	     };
-	  }
-	  else
-	  {
-	     // The browser doesn't support WebSocket
-	     alert("WebSocket NOT supported by your Browser!");
-	  }
-	}
-	
-	var startTime, endTime;
-var gbMove = false;
-
-window.addEventListener('touchstart',function(event) {
-    startTime = new Date().getTime(); 
-    gbMove = false;        
-},false);
-
-window.addEventListener('touchmove',function(event) {
-  gbMove = true;
-},false);
-
-window.addEventListener('touchend',function(event) {
-    endTime = new Date().getTime();
-    if(!gbMove && (endTime-startTime)/1000 > 2)
-        alert('tap hold event');      
-},false);
 </script>
 
 <!-- Bootstrap core CSS -->
@@ -195,8 +161,9 @@ window.addEventListener('touchend',function(event) {
 <body onload="sendCmd('PRESETS')">
     <div id="shade"></div>
     <div id="modal">
-        <textarea id="presetName" rows="5" cols="25"></textarea>
-        <button id="close" onclick="sendPresetAndClear(this.parentNode)">Close</button>
+        <p>Enter new name for preset</p>
+        <textarea id="presetName" rows="1" cols="25"></textarea>
+        <button id="close" onclick="sendPresetAndClear(this.parentNode)">Ok</button>
     </div>
 
 	<div class="row" style="align: center; fixed-width: 1000;">
@@ -216,19 +183,19 @@ window.addEventListener('touchend',function(event) {
 					</div>
 					<div class="row">
 						<div class="col-xs-2"><button id="scanButton" onclick="sendScanning(this)" type="button" class="btn btn-primary">Scan Presets</button></div>
+						<div id="preset0"></div>
 						<div id="preset1"></div>
 						<div id="preset2"></div>
 						<div id="preset3"></div>
 						<div id="preset4"></div>
-						<div id="preset5"></div>
 					</div>
 					<div class="row">
 						<div class="col-xs-2"><button onclick="sendCmd('PRESET_STORE')" type="button" class="btn btn-primary">Set Preset</button></div>
+						<div id="preset5"></div>
 						<div id="preset6"></div>
-						<div id="preset7"></div>
+						<div id="preset7"><p>Loading Presets ...</p></div>
 						<div id="preset8"></div>
 						<div id="preset9"></div>
-						<div id="preset10"></div>
 					</div>
 				</div>
 			</div>
@@ -313,7 +280,7 @@ window.addEventListener('touchend',function(event) {
 		</div>
 	</div>
 	<br/>
-	<p style="box-shadow: 5px 5px 5px #888888;">Results</p>
+	<p style="box-shadow: 5px 5px 5px #888888;">JSON Commands</p>
 	<p id="result"></p>
 	
 	<!-- /container -->

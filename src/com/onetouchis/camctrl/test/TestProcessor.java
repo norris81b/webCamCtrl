@@ -20,6 +20,7 @@ package com.onetouchis.camctrl.test;
 import javax.servlet.ServletContext;
 
 import com.onetouchis.camctrl.IProcessor;
+import com.onetouchis.camctrl.util.Utils;
 
 /**
  * Test class for testing user interactions. Lets a developer work on
@@ -38,7 +39,8 @@ public class TestProcessor implements IProcessor {
 
 	@Override
 	public void sendDataCommand(String cmdStr, byte[] arguments) {
-		System.out.println("Testing send data command: " + cmdStr + "; with args: " + arguments);
+		System.out.println("Testing send data command: " + cmdStr + 
+		        "; with args: " + Utils.byteArrayToHexString(arguments));
 	}
 
 	@Override
