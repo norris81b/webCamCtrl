@@ -29,6 +29,7 @@ Running
 the RS232 port
 - Restart ser2net (or equivalent)
 - copy webCamCtrl.war to the <JBOSS_HOME>/standalone/deployments directory
+- copy presets.json to the <JBOSS_HOME>/bin directory
 - from a PC/Mac web browser, open url http://<hostname>:8080/webCamCtrl/index.jsp
 OR
 - from a mobile device, open url http://<hostname>:8080/webCamCtrl/indexMobile.jsp
