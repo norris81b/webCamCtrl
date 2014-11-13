@@ -175,13 +175,19 @@ public class CamCtrlServlet extends HttpServlet {
                     try {
                         if ("ON".equals(args)) {
                             logger.info("starting scanning");
+                            if (scanThread != null)
+                            {
+                                scanThread.destroy();
+                            }
                             scanThread = new ScanRunner();
                             Thread t = new Thread(scanThread);
                             t.start();
                         } else if ("OFF".equals(args)) {
                             logger.info("stopping the scan thread");
-                            scanThread.destroy();
-                            scanThread = null;
+                            if (scanThread != null) {
+                                scanThread.destroy();
+                                scanThread = null;
+                            }
                         } else {
                             logger.warn("Received scan cmd with no args: "
                                     + cmd);
