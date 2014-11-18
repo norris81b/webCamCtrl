@@ -60,6 +60,8 @@ public class CamCtrlServlet extends HttpServlet {
     /** default port name when using COMM based processor */
     private static final String DEFAULT_COMM_PORT = "/dev/ttyS0";
 
+    /** default RS232 processing class to instanciate */
+    private static final String DEFAULT_PROCESSOR_CLASS = "com.onetouchis.camctrl.RS232NetProcessor";
     /** internal thread for scanning preset positions */
     private static ScanRunner scanThread;
 
@@ -90,7 +92,7 @@ public class CamCtrlServlet extends HttpServlet {
             int rs232IpPort = Integer.getInteger("wcc.rs232.net.port",
                     DEFAULT_CAM_PORT);
             String processorClass = System.getProperty("wcc.rs232.processor",
-                    "com.onetouchis.camctrl.RS232NetProcessor");
+                    DEFAULT_PROCESSOR_CLASS);
             logger.info("Creating IProcessor class: " + processorClass);
             Class<?> procClass = Class.forName(processorClass);
             processor = (IProcessor) procClass.newInstance();
